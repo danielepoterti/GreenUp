@@ -29,6 +29,13 @@
             {
               "client_id": "924784134552-uhrfpootllqhtg23ubd6b293q1a60bvg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "924784134552-4uuahivhbo7kjrsr9sk9opjqi9sle988.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.test.greenUp"
+              }
             }
           ]
         }

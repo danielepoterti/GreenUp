@@ -9,7 +9,6 @@ import 'screens/profile_screen.dart';
 import 'screens/books_screen.dart';
 import 'screens/card_screen.dart';
 
-
 GlobalKey<MapScreenState> globalKey = GlobalKey();
 
 class Wrapper extends StatefulWidget {

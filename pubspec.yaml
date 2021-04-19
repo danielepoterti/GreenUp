@@ -35,6 +35,7 @@ dependencies:
   credit_card: 0.1.6
   firebase_core: "^1.0.2"
   firebase_auth: ^1.0.1
+  cloud_functions: "^1.0.3"
   flutter_secure_storage: ^4.1.0
   google_sign_in: "^4.5.1"
   scroll_snap_list: ^0.7.0
@@ -72,6 +73,7 @@ flutter:
     - assets/images/chargingAvailable128px.png
     - assets/images/chargingUnavailable.png
     - assets/images/chargingOccupied.png
+    - assets/images/github.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../screens/transaction_screen.dart';
 import 'package:green_up/services/map_helper.dart';
+//import 'package:cloud_functions/cloud_functions.dart';
 
 // ignore: must_be_immutable
 class LoadingButton extends StatefulWidget {
@@ -26,10 +27,26 @@ class LoadingButtonState extends State<LoadingButton>
     });
   }
 
+  // void startTransaction() async {
+  //   HttpsCallable callable =
+  //       FirebaseFunctions.instance.httpsCallable('startTransaction');
+  //   final results = await callable.call(<String, String>{'chargebox_id': 'due'});
+  //   var fruit = results.data;
+  //   print(fruit);
+  // }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => controller.forward(),
+      onTapDown: (_) => controller.forward().then((value) {
+        if (controller.status == AnimationStatus.completed) {
+          //startTransaction();
+          MapHelper.selectedForTransaction =
+              MapHelper.nearbyChargePoints[widget.index];
+          Navigator.of(context).push(_createRoute());
+          controller.reverse();
+        }
+      }),
       onTapUp: (_) {
         if (controller.status == AnimationStatus.forward) {
           controller.reverse();
@@ -41,6 +58,7 @@ class LoadingButtonState extends State<LoadingButton>
             /*timeInSecForIosWeb: 1*/
           );
         } else if (controller.status == AnimationStatus.completed) {
+          //startTransaction();
           MapHelper.selectedForTransaction =
               MapHelper.nearbyChargePoints[widget.index];
           Navigator.of(context).push(_createRoute());
