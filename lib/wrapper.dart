@@ -1,19 +1,19 @@
 import 'package:circular_reveal_animation/circular_reveal_animation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:green_up/screens/transactions_list_screen.dart';
 import 'package:green_up/widgets/curved_navigation_bar.dart';
 import 'package:green_up/services/map_helper.dart';
 import 'screens/map_screen.dart';
-import 'screens/schedule_screen.dart';
 import 'screens/profile_screen.dart';
-import 'screens/books_screen.dart';
-import 'screens/card_screen.dart';
 
 GlobalKey<MapScreenState> globalKey = GlobalKey();
 
 class Wrapper extends StatefulWidget {
   Position snapshot;
-  Wrapper({@required this.snapshot});
+  String login;
+  Function getLogin;
+  Wrapper({@required this.snapshot, this.login, this.getLogin});
   @override
   _WrapperState createState() => _WrapperState();
 }
@@ -50,48 +50,6 @@ class _WrapperState extends State<Wrapper> with SingleTickerProviderStateMixin {
     });
   }
 
-  List getAutocomplete(List list) {
-    autocompleteVisible = true;
-    List<Widget> appoggio = [];
-    list.forEach((element) {
-      appoggio.add(SizedBox(
-        height: 7,
-      ));
-      appoggio.add(InkWell(
-          onTap: () => {handleAutocompleteClick(element)},
-          child: Container(
-            height: 40,
-            width: 500,
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(4))),
-            child: Center(child: Text(element['name'])),
-          )));
-    });
-    setState(() {
-      autocomplete = appoggio;
-    });
-  }
-
-  Widget _autocomplete() {
-    if (autocompleteVisible) {
-      return (Container(
-        width: 300,
-        child: MediaQuery.removePadding(
-          removeBottom: true,
-          context: context,
-          child: ListView(
-            padding: EdgeInsets.all(0),
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            children: autocomplete,
-          ),
-        ),
-      ));
-    } else {
-      return Container();
-    }
-  }
 
   Widget _router() {
     if (_page == 0) {
@@ -114,13 +72,9 @@ class _WrapperState extends State<Wrapper> with SingleTickerProviderStateMixin {
         children: <Widget>[
           MapScreen(snapshot: widget.snapshot),
           CircularRevealAnimation(
-            animation: animation,
-            centerAlignment: Alignment.bottomCenter,
-            child: Container(
-              color: Colors.white,
-            ),
-          ),
-          Schedule(),
+              animation: animation,
+              centerAlignment: Alignment.bottomCenter,
+              child: TransactionsListScreen()),
         ],
       ));
     } else if (_page == 2) {
@@ -137,53 +91,9 @@ class _WrapperState extends State<Wrapper> with SingleTickerProviderStateMixin {
           CircularRevealAnimation(
             animation: animation,
             centerAlignment: Alignment.bottomCenter,
-            child: Container(
-              color: Colors.white,
-            ),
+            child: ProfileScreen(widget.login, widget.getLogin),
           ),
-          Prenotazioni(),
-        ],
-      ));
-    } else if (_page == 3) {
-      return (Stack(
-        children: <Widget>[
-          MapScreen(snapshot: widget.snapshot),
-          Container(
-            margin: EdgeInsets.all(20),
-            child: Align(
-              alignment: FractionalOffset.topCenter,
-              child: Container(),
-            ),
-          ),
-          CircularRevealAnimation(
-            animation: animation,
-            centerAlignment: Alignment.bottomCenter,
-            child: Container(
-              color: Colors.white,
-            ),
-          ),
-          CreditCard(),
-        ],
-      ));
-    } else if (_page == 4) {
-      return (Stack(
-        children: <Widget>[
-          MapScreen(snapshot: widget.snapshot),
-          Container(
-            margin: EdgeInsets.all(20),
-            child: Align(
-              alignment: FractionalOffset.topCenter,
-              child: Container(),
-            ),
-          ),
-          CircularRevealAnimation(
-            animation: animation,
-            centerAlignment: Alignment.bottomCenter,
-            child: Container(
-              color: Colors.white,
-            ),
-          ),
-          Profile(),
+          
         ],
       ));
     }
@@ -203,12 +113,7 @@ class _WrapperState extends State<Wrapper> with SingleTickerProviderStateMixin {
           height: 75.0,
           items: <Widget>[
             Icon(Icons.map, size: 30),
-            Icon(Icons.schedule, size: 30),
             Icon(Icons.list, size: 30),
-            Icon(
-              Icons.credit_card,
-              size: 30,
-            ),
             Icon(Icons.person, size: 30),
           ],
           color: Colors.white,
@@ -232,16 +137,7 @@ class _WrapperState extends State<Wrapper> with SingleTickerProviderStateMixin {
                 }
                 break;
             }
-            // print(
-            //     '===========================================================================');
-            // print(animationController.status);
-            // if (animationController.status == AnimationStatus.forward ||
-            //     animationController.status == AnimationStatus.completed) {
-            //   animationController.reverse();
-            // } else {
-            //   animationController.forward();
-            // }
-
+            
             setState(() {
               _page = index;
             });

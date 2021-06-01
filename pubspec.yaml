@@ -42,12 +42,16 @@ dependencies:
   google_fonts: ^2.0.0
   circular_reveal_animation: ^2.0.0
   url_launcher: ^6.0.3
+  flutter_staggered_animations: "^1.0.0"
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   fluttertoast: ^8.0.3
   flutter_gifimage: ^1.0.1
   rounded_loading_button: ^1.0.18
+  cloud_firestore: ^1.0.7
+  progress_indicator: ^0.2.0
+  flutter_phoenix: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +78,7 @@ flutter:
     - assets/images/chargingUnavailable.png
     - assets/images/chargingOccupied.png
     - assets/images/github.png
+    - assets/images/skri.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

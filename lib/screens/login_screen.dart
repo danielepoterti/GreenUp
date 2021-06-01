@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'signup_screen.dart';
 //import 'package:google_sign_in/google_sign_in.dart';
 
 FirebaseAuth auth = FirebaseAuth.instance;
@@ -23,44 +25,29 @@ class _LoginState extends State<Login> {
   //constructor
   _LoginState(this.storage, this.getLogin);
 
-  void register() async {
-    bool isGood = true;
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-              email: emailController.text, password: passwordController.text);
-    } on FirebaseAuthException catch (e) {
-      isGood = false;
-      if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
-      } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
-      }
-    } catch (e) {
-      isGood = false;
-      print(e);
-    }
-    //succesfully registered
-    if (isGood) {
-      String data =
-          '{\"mail\": \"${emailController.text}\", \"psw\": \"${passwordController.text}\"}';
-      await storage.write(key: 'login', value: data);
-      this.getLogin(data);
-    }
-  }
-
   void login() async {
     bool isGood = true;
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-              email: emailController.text, password: passwordController.text);
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text, password: passwordController.text);
     } on FirebaseAuthException catch (e) {
       isGood = false;
       if (e.code == 'user-not-found') {
         print('No user found for that email.');
+        Fluttertoast.showToast(
+          msg: 'No user found for that email.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          /*timeInSecForIosWeb: 1*/
+        );
       } else if (e.code == 'wrong-password') {
         print('Wrong password provided for that user.');
+        Fluttertoast.showToast(
+          msg: 'Wrong password provided for that user.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          /*timeInSecForIosWeb: 1*/
+        );
       }
     }
     //successfully logged in
@@ -97,25 +84,22 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        //resizeToAvoidBottomInset: false,
         appBar: AppBar(
           elevation: 0,
           title: Text('Login'),
-          backgroundColor: Colors.green,
+          backgroundColor: const Color(0xff44a688),
         ),
-        body: Container(
-            height: double.infinity,
-            width: double.infinity,
-            color: Colors.green,
+        body: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
+            color: const Color(0xff44a688),
             child: Align(
-              alignment: Alignment.bottomCenter,
+              alignment: Alignment.topCenter,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // SizedBox(
-                  //   height: 20,
-                  // ),
                   Image.asset(
                     'assets/images/github.png',
                     width: 150,
@@ -123,86 +107,107 @@ class _LoginState extends State<Login> {
                   ),
                   Container(
                     child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
-                          height: MediaQuery.of(context).size.height - 230,
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(50),
-                                  topRight: Radius.circular(50))),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: 20,
-                              ),
-                              SizedBox(
-                                height: 20,
-                              ),
-                              Container(
-                                width: MediaQuery.of(context).size.width - 100,
-                                child: TextField(
-                                  controller: emailController,
-                                  decoration: InputDecoration(
-                                      labelText: 'Email',
-                                      prefixIcon: Icon(Icons.person),
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(25))),
-                                      hintText: 'Email'),
-                                ),
-                              ),
-                              SizedBox(
-                                height: 20,
-                              ),
-                              Container(
-                                width: MediaQuery.of(context).size.width - 100,
-                                child: TextField(
-                                  controller: passwordController,
-                                  obscureText: true,
-                                  decoration: InputDecoration(
-                                      labelText: 'Password',
-                                      prefixIcon: Icon(Icons.lock),
-                                      border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(25))),
-                                      hintText: 'Password'),
-                                ),
-                              ),
-                              ElevatedButton(
-                                  style: ButtonStyle(
-                                      backgroundColor:
-                                          MaterialStateColor.resolveWith(
-                                              (states) => Colors.green),
-                                      shape: MaterialStateProperty.all(
-                                          RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(18)))),
-                                  onPressed: login,
-                                  child: Text('Login')),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Text(
-                                'You dont have and account?',
-                                style: TextStyle(fontSize: 15),
-                              ),
-                              GestureDetector(
-                                onTap: () => print('tapped'),
-                                child: Text('Sign Up',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        decoration: TextDecoration.underline)),
-                              )
-                              //ElevatedButton(onPressed: google, child: Text('Google')),
-                            ],
+                      //alignment: Alignment.bottomCenter,
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height - 150,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(50),
+                            topRight: Radius.circular(50),
                           ),
-                        )),
-                  )
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 20,
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Container(
+                              width: MediaQuery.of(context).size.width - 100,
+                              child: TextField(
+                                controller: emailController,
+                                decoration: InputDecoration(
+                                    labelText: 'Email',
+                                    prefixIcon: Icon(Icons.person),
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(25))),
+                                    hintText: 'Email'),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Container(
+                              width: MediaQuery.of(context).size.width - 100,
+                              child: TextField(
+                                controller: passwordController,
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: Icon(Icons.lock),
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(25))),
+                                    hintText: 'Password'),
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            SizedBox(
+                              height: 50,
+                              width:
+                                  (MediaQuery.of(context).size.width - 100) / 2,
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateColor.resolveWith(
+                                          (states) => const Color(0xff44a688)),
+                                  shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: login,
+                                child: Text(
+                                  'Login',
+                                  style: TextStyle(fontSize: 17),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Text(
+                              'You dont have and account?',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          SignUp(storage, getLogin))),
+                              child: Text('Sign Up',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      decoration: TextDecoration.underline)),
+                            )
+                            //ElevatedButton(onPressed: google, child: Text('Google')),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            )));
+            ),
+          ),
+        ));
   }
 }

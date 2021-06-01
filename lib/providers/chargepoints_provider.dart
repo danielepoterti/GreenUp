@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:green_up/models/chargepoint_model.dart';
 import 'package:green_up/services/map_marker.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:ui' as ui;
-import 'dart:io' show Platform;
+
 
 class ChargePoints with ChangeNotifier {
   BitmapDescriptor _iconAvailable;
@@ -16,38 +17,7 @@ class ChargePoints with ChangeNotifier {
   BitmapDescriptor _iconUnavailable;
 
   List<ChargePoint> _chargePoints = [
-    // ChargePoint(
-    //   id: 'cp01',
-    //   address: Address(
-    //     city: 'Nova Milanese',
-    //     country: 'Italia',
-    //     houseNumber: '18',
-    //     street: 'Via Sarajevo',
-    //     zipCode: '20834',
-    //   ),
-    //   status: Status.available,
-    //   plug: PlugType.type2,
-    //   maxPower: PowerSupply.kW22,
-    //   powerType: PowerType.ac,
-    //   cost: 0,
-    //   position: const LatLng(45.594100, 9.192028),
-    // ),
-    // ChargePoint(
-    //   id: 'cp02',
-    //   address: Address(
-    //     city: 'Nova Milanese',
-    //     country: 'Italia',
-    //     houseNumber: '18',
-    //     street: 'Via Sarajevo',
-    //     zipCode: '20834',
-    //   ),
-    //   status: Status.available,
-    //   plug: PlugType.type2,
-    //   maxPower: PowerSupply.kW22,
-    //   powerType: PowerType.ac,
-    //   cost: 0,
-    //   position: const LatLng(45.59348806009438, 9.191465264449239),
-    // ),
+
   ];
 
   List<ChargePoint> get chargePoints {
@@ -60,7 +30,7 @@ class ChargePoints with ChangeNotifier {
 
   Future<BitmapDescriptor> _setMarkerIcon(Status status) async {
     //apparentemente se si usano i byte le dimensioni non si buggano su iOS, tengo cosi per sicurezza
-    int width = Platform.isAndroid ? 128 : 128;
+    //int width = Platform.isAndroid ? 128 : 128;
     String path;
     switch (status) {
       case Status.available:
@@ -75,7 +45,7 @@ class ChargePoints with ChangeNotifier {
     }
 
     Uint8List byte = await getBytesFromAsset(path, 100);
-    return await BitmapDescriptor.fromBytes(byte);
+    return BitmapDescriptor.fromBytes(byte);
 
     // return await BitmapDescriptor.fromAssetImage(
     //     ImageConfiguration(),
@@ -89,43 +59,45 @@ class ChargePoints with ChangeNotifier {
   }
 
   initChargers(BuildContext context) async {
-    final url = Uri.https(
-      'michelebanfi.github.io',
-      'data/data.geojson',
-    );
+    HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('getChargingStations');
+    final results = await callable();
 
-    // final json =
-    //     await DefaultAssetBundle.of(context).loadString("assets/data.json");
-    // Map positionMap = jsonDecode(json);
+    final Map resultsMap = json.decode(results.data);
 
-    try {
-      final response = await http.get(url);
-      final positionMap = json.decode(response.body);
-      final List<ChargePoint> loadedChargers = [];
+    final List<ChargePoint> loadedChargers = [
+      
+    ];
 
-      positionMap['features'].forEach((element) {
-        return loadedChargers.add(
-          ChargePoint(
-            owner: element['properties']['titolare'].toString(),
-            id: element['properties']['id'].toString(),
-            address: Address(
-                city: "Milano",
-                street: element['properties']['localita'].toString()),
-            status: Status.available,
-            plug: null,
-            maxPower: null,
-            powerType: element['properties']['tipo_ricar'].toString(),
-            cost: null,
-            position: LatLng(element['geometry']['coordinates'][0][1],
-                element['geometry']['coordinates'][0][0]),
-          ),
-        );
-      });
-      _chargePoints = loadedChargers;
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    resultsMap.forEach((key, element) {
+      print(element["id"]);
+      print(element["longitudine"]);
+
+      return element["longitudine"] == null
+          ? null
+          : loadedChargers.add(
+              ChargePoint(
+                owner: element["titolare"].toString(),
+                id: element["id"].toString(),
+                address: Address(
+                  city: element["citta"],
+                  street: element["via"],
+                ),
+                //TODO: check status
+                status: Status.available,
+                plug: null,
+                maxPower: null,
+                powerType: element["tipo_ricar"].toString(),
+                cost: null,
+                position: LatLng(
+                  double.parse(element["latitudine"]),
+                  double.parse(element["longitudine"]),
+                ),
+              ),
+            );
+    });
+    _chargePoints = loadedChargers;
+    notifyListeners();
   }
 
   initIcons() async {
@@ -151,6 +123,54 @@ class ChargePoints with ChangeNotifier {
                       : BitmapDescriptor.defaultMarker,
         ),
       );
+    });
+
+    return [...chargeMarkers];
+  }
+
+  List<MapMarker> get markersAC {
+    List<MapMarker> chargeMarkers = [];
+
+    _chargePoints.forEach((element) {
+      if (element.powerType.contains("AC")) {
+        chargeMarkers.add(
+          MapMarker(
+            id: element.id,
+            position: element.position,
+            icon: element.status == Status.available
+                ? _iconAvailable
+                : element.status == Status.unavailable
+                    ? _iconUnavailable
+                    : element.status == Status.occupied
+                        ? _iconOccupied
+                        : BitmapDescriptor.defaultMarker,
+          ),
+        );
+      }
+    });
+
+    return [...chargeMarkers];
+  }
+
+  List<MapMarker> get markersDC {
+    List<MapMarker> chargeMarkers = [];
+
+    _chargePoints.forEach((element) {
+      if (element.powerType.contains("DC")) {
+        chargeMarkers.add(
+          MapMarker(
+            id: element.id,
+            position: element.position,
+            icon: element.status == Status.available
+                ? _iconAvailable
+                : element.status == Status.unavailable
+                    ? _iconUnavailable
+                    : element.status == Status.occupied
+                        ? _iconOccupied
+                        : BitmapDescriptor.defaultMarker,
+          ),
+        );
+      }
     });
 
     return [...chargeMarkers];

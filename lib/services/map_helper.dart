@@ -7,10 +7,18 @@ import 'dart:ui';
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:green_up/models/chargepoint_model.dart';
 import 'package:green_up/providers/chargepoints_provider.dart';
+import 'package:green_up/providers/transcations_provider.dart';
 import 'package:green_up/services/map_marker.dart';
+import 'package:green_up/widgets/circular_button.dart';
+import 'package:scroll_snap_list/scroll_snap_list.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'anim_search_widget.dart';
 
 /// In here we are encapsulating all the logic required to get marker icons from url images
 /// and to show clusters using the [Fluster] package.
@@ -192,7 +200,8 @@ class MapHelper {
   }
 
   //TODO: check for duplicated variable in logic
-  static ChargePoints data;
+  static ChargePoints dataChargePoints;
+  static Transactions dataTransactions;
   static List<MapMarker> markersSelected = [];
   static Fluster<MapMarker> clusterManager;
   static final int minClusterZoom = 0;
@@ -209,8 +218,8 @@ class MapHelper {
   static AnimationController controllerChargePointCard;
   static Animation<Offset> offsetAnimation;
   static final Set<Marker> markers = Set();
-  static final CameraPosition kRoma = CameraPosition(
-    target: LatLng(41.893056, 12.482778),
+  static final CameraPosition kMilano = CameraPosition(
+    target: LatLng(45.4773, 9.1815),
     zoom: 11,
   );
   static String styleOfMapJSON;
@@ -219,18 +228,11 @@ class MapHelper {
   static AssetImage chargingGif = AssetImage(
     "assets/images/battery-charge.gif",
   );
-
-  // static Future<void> initMarkers() async {
-  //   final List<MapMarker> markers = [];
-  //   markers.addAll(data.markers);
-  //   markersSelected.addAll(data.markers);
-  //   clusterManager = await initClusterManager(
-  //     markers,
-  //     minClusterZoom,
-  //     maxClusterZoom,
-  //   );
-  //   await MapScreen.updateMarkers();
-  // }
+  static final keyAnimationSearch = GlobalKey<AnimSearchBarState>();
+  static bool autocompleteVisible = false;
+  static List<Widget> autocomplete;
+  static final keySnaplist = GlobalKey<ScrollSnapListState>();
+  static List<bool> isSelected = [true, false, false];
 
   static Future<void> updateZoomLevel([double updatedZoom]) async {
     LatLngBounds area = await controllerMap.getVisibleRegion();
@@ -277,5 +279,169 @@ class MapHelper {
 
   static void setMapstyle(GoogleMapController controller) async {
     controller.setMapStyle(styleOfMapJSON);
+  }
+
+  static Widget chargePointCardsBuilder(BuildContext context, int index) {
+    return Card(
+      margin: EdgeInsets.only(left: 5, right: 5, bottom: 30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(
+          Radius.circular(13),
+        ),
+      ),
+      elevation: 5,
+      child: SizedBox(
+        child: Stack(children: [
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: ClipOval(
+              child: Material(
+                color: const Color(0xff44a688), // button color
+                child: InkWell(
+                  //splashColor: Colors.red, // inkwell color
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: Icon(
+                      Icons.directions_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onTap: () async {
+                    String url =
+                        'https://www.google.com/maps/dir/?api=1&destination=${MapHelper.nearbyChargePoints[index].position.latitude},${MapHelper.nearbyChargePoints[index].position.longitude}';
+                    await canLaunch(url)
+                        ? await launch(url)
+                        : throw 'Could not launch google maps';
+                  },
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 17.5,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+              child: Text(
+                MapHelper.nearbyChargePoints[index].address.city,
+                style: GoogleFonts.roboto(
+                    fontSize: 20, fontWeight: FontWeight.w200),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 10.5,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+              child: Text(
+                MapHelper.nearbyChargePoints[index].id,
+                style: GoogleFonts.roboto(
+                    fontSize: 10, fontWeight: FontWeight.w200),
+              ),
+            ),
+          ),
+          Positioned(
+            //top: 35,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20.0, top: 40, right: 20.0),
+              child: Column(
+                children: [
+                  Text(
+                    MapHelper.nearbyChargePoints[index].address.street,
+                    softWrap: true,
+                    style: GoogleFonts.roboto(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 80,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+              child: Text(
+                MapHelper.nearbyChargePoints[index].owner,
+                style: GoogleFonts.roboto(
+                    fontSize: 15, fontWeight: FontWeight.w200),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 100,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+              child: Text(
+                MapHelper.nearbyChargePoints[index].powerType,
+                style: GoogleFonts.roboto(
+                    fontSize: 15, fontWeight: FontWeight.w200),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 20,
+            left: 20,
+            child: LoadingButton(index),
+          ),
+        ]),
+        width: (MediaQuery.of(context).size.width - 40),
+        height: 300,
+      ),
+    );
+  }
+
+  static void handlerChangeFocusChargePointList(double long, double lat) async {
+    MapHelper.isSliding = true;
+    final GoogleMapController controller =
+        await MapHelper.controllerCompleterMap.future;
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          bearing: 0,
+          target: LatLng(lat, long),
+          zoom: 17.0,
+        ),
+      ),
+    );
+    MapHelper.isSliding = false;
+  }
+
+  static Widget autocompleteWidget(BuildContext context) {
+    if (MapHelper.autocompleteVisible) {
+      return (Container(
+        width: MediaQuery.of(context).size.width - 40,
+        child: MediaQuery.removePadding(
+          removeBottom: true,
+          context: context,
+          child: AnimationLimiter(
+            child: ListView.builder(
+              itemCount: autocomplete.length,
+              padding: EdgeInsets.all(0),
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              //children: autocomplete,
+              itemBuilder: (context, index) {
+                return AnimationConfiguration.staggeredList(
+                  //key: keyListPlace,
+                  duration: const Duration(milliseconds: 375),
+                  position: index,
+                  child: SlideAnimation(
+                    verticalOffset: 44.0,
+                    child: FadeInAnimation(
+                      child: autocomplete[index],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ));
+    } else {
+      return Container();
+    }
   }
 }

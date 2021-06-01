@@ -70,14 +70,14 @@ class AnimSearchBar extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _AnimSearchBarState createState() => _AnimSearchBarState();
+  AnimSearchBarState createState() => AnimSearchBarState();
 }
 
 ///toggle - 0 => false or closed
 ///toggle 1 => true or open
 int toggle = 0;
 
-class _AnimSearchBarState extends State<AnimSearchBar>
+class AnimSearchBarState extends State<AnimSearchBar>
     with SingleTickerProviderStateMixin {
   ///initializing the AnimationController
   AnimationController _con;
@@ -93,6 +93,39 @@ class _AnimSearchBarState extends State<AnimSearchBar>
 
       /// animationDurationInMilli is optional, the default value is 375
       duration: Duration(milliseconds: widget.animationDurationInMilli),
+    );
+  }
+
+  void onPressHandler() {
+    print(toggle);
+    setState(
+      () {
+        ///if the search bar is closed
+        if (toggle == 0) {
+          toggle = 1;
+          setState(() {
+            ///if the autoFocus is true, the keyboard will pop open, automatically
+            if (widget.autoFocus)
+              FocusScope.of(context).requestFocus(focusNode);
+          });
+
+          ///forward == expand
+          _con.forward();
+        } else {
+          widget.onPrefixTap();
+
+          ///if the search bar is expanded
+          toggle = 0;
+
+          ///if the autoFocus is true, the keyboard will close, automatically
+          setState(() {
+            if (widget.autoFocus) FocusScope.of(context).unfocus();
+          });
+
+          ///reverse == close
+          _con.reverse();
+        }
+      },
     );
   }
 
@@ -255,38 +288,7 @@ class _AnimSearchBarState extends State<AnimSearchBar>
                         toggle == 1 ? Icons.arrow_back_ios : Icons.search,
                         size: 20.0,
                       ),
-                onPressed: () {
-                  setState(
-                    () {
-                      ///if the search bar is closed
-                      if (toggle == 0) {
-                        toggle = 1;
-                        setState(() {
-                          ///if the autoFocus is true, the keyboard will pop open, automatically
-                          if (widget.autoFocus)
-                            FocusScope.of(context).requestFocus(focusNode);
-                        });
-
-                        ///forward == expand
-                        _con.forward();
-                      } else {
-                        widget.onPrefixTap();
-
-                        ///if the search bar is expanded
-                        toggle = 0;
-
-                        ///if the autoFocus is true, the keyboard will close, automatically
-                        setState(() {
-                          if (widget.autoFocus)
-                            FocusScope.of(context).unfocus();
-                        });
-
-                        ///reverse == close
-                        _con.reverse();
-                      }
-                    },
-                  );
-                },
+                onPressed: onPressHandler,
               ),
             ),
           ],

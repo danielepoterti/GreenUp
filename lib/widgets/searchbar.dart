@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:green_up/services/map_helper.dart';
 import '../services/anim_search_widget.dart';
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class Search extends StatefulWidget {
+// ignore: must_be_immutable
+class SearchBar extends StatefulWidget {
   double width;
   String query = '';
   Function callback;
   Function prefixTap;
-  Search({this.callback, this.prefixTap, this.width});
+  Function suffixTap;
+  SearchBar({
+    this.callback,
+    this.prefixTap,
+    this.width,
+  });
   @override
-  _SearchState createState() => _SearchState(callback, prefixTap);
+  _SearchBarState createState() => _SearchBarState(callback, prefixTap);
 }
 
-class _SearchState extends State<Search> {
+class _SearchBarState extends State<SearchBar> {
   Function callback;
   Function prefixTap;
-  _SearchState(this.callback, this.prefixTap);
+  _SearchBarState(this.callback, this.prefixTap);
   TextEditingController textController = TextEditingController();
   @override
   void initState() {
@@ -26,12 +34,14 @@ class _SearchState extends State<Search> {
 
   // callback fired every time input change
   void handleTextChanges() async {
+    String key = "AIzaSyCc-16mvBlbztZ44hjE2LJB1ZNvXbZrwGM";
     if (textController.text.length > 2) {
       final url = Uri.parse(
-          'https://photon.komoot.io/api/?q=${textController.text}&limit=5');
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${textController.text}&language=it_IT&components=country:it&key=$key');
       final response = await http.get(url);
       Map<String, dynamic> map = json.decode(response.body);
-      List<dynamic> data = map["features"];
+      List<dynamic> data = map["predictions"];
+
       this.callback(data);
     }
   }
@@ -41,6 +51,7 @@ class _SearchState extends State<Search> {
     return Container(
         margin: EdgeInsets.only(top: 30),
         child: AnimSearchBar(
+          key: MapHelper.keyAnimationSearch,
           width: widget.width,
           textController: textController,
           suffixIcon: Icon(Icons.search),
