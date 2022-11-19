@@ -1,3 +1,3 @@
 # GreenUp
 
-Applicazione GreenUp
+ GreenUp Application
